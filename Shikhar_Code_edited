@@ -1,0 +1,50 @@
+import numpy as np
+
+M1 = np.array( [[1.0, 2.0, 0.0], [-2.0, 1.0, 2.0], [1.0, 3.0, 1.0]] )
+#val should return the eigenvalue followed by the normalized eigenvector
+#for above example its 3, [0.5 0.5 1]
+print(M1)
+
+def eigenvalue(A, v):
+    Av = A.dot(v)
+    return v.dot(Av)
+
+def power_iteration(A):
+    n, d = A.shape
+
+    #v = np.ones(d) / np.sqrt(d)
+    v = np.ones(d)
+    ev = eigenvalue(A, v)
+
+    while True:
+        v_new = (A.dot(v)) / np.linalg.norm(A.dot(v))
+        #ratio = v/v_new
+        ev_new = eigenvalue(A, v_new)
+        if np.abs(ev - ev_new) < 0.01:
+            break
+        v = v_new
+        ev = ev_new
+
+    return ev_new, v_new#, ratio
+
+eig = []
+tolerance = 0.001
+
+tup = power_iteration(M1)
+eig.append(tup)
+#testval = (eig[0][1].outer(eig[0][1].T))
+testval = np.outer( eig[0][1], eig[0][1] )
+print(testval)
+
+while True:
+    tup = power_iteration(M1)
+    eig.append(tup)
+   # ratio = tup[2]
+    #if  (abs(eig[len(eig)-1][0]/eig[0][0]) < tolerance):
+    if (abs(eig[0][0]/eig[len(eig)-1][0]) < tolerance):
+        break
+ #   M1 = M1 - eig[len(eig)-1][0]*(eig[len(eig)-1][1].dot(eig[len(eig)-1][1].T))
+    M1 = M1 - eig[0][0]         *np.outer( eig[0][1], eig[0][1] )
+
+
+print(eig)
