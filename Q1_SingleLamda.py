@@ -2,6 +2,8 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 
+
+####### Read the fill
 filename = "russell_cov.txt"
 try:
     f = open(filename, 'r')
@@ -21,50 +23,75 @@ len(matrix)
 
 mat = [x.split() for x in matrix]
 mat = np.array(mat)
-mat = mat.astype(float)
+A = mat.astype(float)
 
 
 
-#####PCA
-#set parameters
-order = len(mat)
-tol = 0.0001
-u0 = np.ones(order)
-miter = 2000  #the maximun times of iteration
 
 
-def findEigV(m):
+######## Power Method for PCA
+
+order = len(A)
+eps = 0.001 # cannot be too small, or else the the error will culmulate and then cause a bad answer
+u0 = np.ones(order)  # intial vector
+tol = 0.001
+
+
+def findEigV(m, eps):
 
     """
 
     :param m: matrix to be solved
+           eps: tolarence of stopping
     :return: eigva : maximum eigenvector for m
              eigve : eigenvector corresponds to eigva
     """
     u = u0
+    maxi = np.max(u)
+    u = u / maxi
 
-    b = np.linalg.norm(u, np.inf)
-    u = u / b  # unify
 
-    for k in range(miter):
+    while True:
+        #print(k)
 
-        print(k)
-
-        v = np.dot(mat, u)
-        b = np.linalg.norm(v, np.inf)
-
-        if b == 0:
+        mu = np.dot(m, u)
+        #maxi = np.linalg.norm(Au, np.inf)
+        maxi = np.max(mu)
+        if maxi == 0:
             print("mat has eigenvalue 0, please select new vector u0")
             sys.exit()
 
-        w = v / b
+        w = mu / maxi
         err = np.linalg.norm(w - u, np.inf)
         u = w
 
-        if err < tol:
-            return (b, u)
+        if err < eps:
+            return (maxi, u)
 
-    print("Maximum number of iterations exceeded")
+    #print("Maximum number of iterations exceeded")
 
-(eigva, eigve) = findEigV(mat)
-print("the biggest eigenvalue is %s\n" % eigva)
+Eigva_list = []
+count = 0
+
+while True:
+
+    (eigva, eigve) = findEigV(A,eps)
+    print(eigva)
+
+    Eigva_list.append(eigva)
+    count += 1
+    if abs(Eigva_list[-1] / Eigva_list[0]) < tol:
+        break
+    else:
+        n = np.linalg.norm(eigve,2)
+
+    eigve = eigve / n
+    A = A - eigva * np.outer(eigve,eigve)
+
+print(count)
+
+plt.plot(range(1,count+1), Eigva_list, color='r', linewidth=1, marker='*', markerfacecolor='g', markeredgecolor='g', linestyle='--')
+plt.ylabel('eigenvalue')
+#plt.title('top %s\n eigenva)
+
+plt.show()
