@@ -1,5 +1,7 @@
-#include<iostream>
-#include<stdlib.h> 
+#include<iostream> 
+#include<stdlib.h>
+#include<algorithm>
+#include<vector>
 
 using namespace std;
 
@@ -17,13 +19,23 @@ double dot(int N, double* x, double* y)
 	return sum;
 }
 
+bool compare(int a, int b)
+{
+	return X[a]> X[b];
+}
+
 double uni_rv()
 //generate one uniform distributed random varible from [0,1]
 {
 	return float(rand())/RAND_MAX;
 }
 
-
+double absolute (double x)
+{
+	if(x>=0) return x;
+	else return -x;
+}
+	
 bool initial(int N, double* upbound,double* lowbound, double* x)
 //First: examine the feasibility of upbound and lowbound of the QP problem
 //Second: x is the starting protfolio protion that we want to find a feasible starting x. 
@@ -53,8 +65,7 @@ bool initial(int N, double* upbound,double* lowbound, double* x)
 			cout<<"Too big low bound"<<endl;
 			return false;
 		}
-	}
-	
+	}	
 	if(sumup<=1)
 	{
 	    if(sumup==1)
@@ -94,7 +105,9 @@ int GiveY(int N, double* g,double* y, double* x, double* cov, double* mu,double 
 		plus=dot(N,&cov[i*N],x);
 		g[i]=2*lambda*plus-mu[i];
 	}
-	// double sort g;
+	vector<int> now=seq;
+	sort(now.begin(),now.end(),compare); //after sorting, now become an index array from biggest X[i] to smallest X[j].
+	
 	// compute m
 	// return y buy output
 	return 0;
@@ -113,11 +126,11 @@ double GiveS(int N,double* g, double* y, double* cov, double lambda)
 	s=s/dot(N,temp,y);
 	s=s/(-2*lambda);
 	if(s>1) s=0.99;
-	
 	/* Below I cout the s because I am not sure whether the s will be negative. 
 	theoretically speaking, it is impossible, since y is the decreasing direction. 
 	But I am worried about the issue of accuracy will generate a s such as -0.00001*/
 	cout<<"s is "<<s<<endl;
+	delete []temp;
 	/*
 	if(s>1)
 	{
@@ -146,8 +159,11 @@ double GiveStep(int N, double* x,double* cov,double* mu, double lambda, double* 
 	{
 		temp=s*y[i];
 		x[i]+=temp;
-		if(abs(temp)>move_max){move_max=abs(temp);}
+		temp=absolute(temp);
+		if(temp>move_max){move_max=temp;}
 	}
+	delete []y;
+	delete []g;
 	return move_max;	
 }
 
@@ -164,6 +180,12 @@ int main()
 	upbound[0]=1;upbound[1]=1;lowbound[0]=0;lowbound[1]=0;
 	cov[0]=4;cov[1]=-1;cov[2]=-1;cov[3]=1;
 	mu[0]=2;mu[1]=1;
+	
+	vector<int> seq;
+	for(int i=0;i<10;i++)
+	{
+		seq.push_back( i );
+	}
 
 	bool feasible;
 	feasible=initial(NN,upbound,lowbound,x);
@@ -181,13 +203,8 @@ int main()
 		size=GiveStep(NN,x,cov,mu,lambda,lowbound,upbound);
 		if(size<eps)break;
 	}
-	
-	
-	
-	
-	
-	
-	/* Test Code of GiveS
+	/* 
+	Test Code of GiveS
 	cout<<NN<<endl;
 	double* testg=new double[NN];
 	testg[0]=1;testg[1]=2;
