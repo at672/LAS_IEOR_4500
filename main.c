@@ -10,13 +10,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-int readit(char *nameoffile, int *addressofn, double **, double **, double **, double **, double **);
+int readit(char *nameoffile, int *addressofn, double **, double **, double **, double **, double *addressoflambda);
 
 int main(int argc, char **argv)
 {
     int retcode = 0;
     int n;
-    double *lb, *ub, *covariance, *mu, *lambda;
+    double lambda;
+    double *lb, *ub, *covariance, *mu;
     /*
     if (argc != 2){
         printf("usage: qp1 filename\n");  retcode = 1;
@@ -24,19 +25,23 @@ int main(int argc, char **argv)
     }
     */
     retcode = readit("example.txt", &n, &lb, &ub, &mu, &covariance, &lambda);
-    //printf(lb[0]);
+    //printf("n=%d\n", n);
+    //printf("%f\n", lb[3]);
+    //printf("%f\n", lambda);
+    //printf("%f\n", covariance[5]);
     BACK:
     return retcode;
 }
 
 int readit(char *filename, int *address_of_n, double **plb, double **pub,
-           double **pmu, double **pcovariance, double **plambda)
+           double **pmu, double **pcovariance, double *address_of_lambda)
 {
     int readcode = 0, fscancode;
     FILE *datafile = NULL;
-    char buffer[100];
+    char buffer[1000];
     int n, i, j;
-    double *lb = NULL, *ub = NULL, *mu = NULL, *covariance = NULL, *lambda = NULL;
+    double lambda;
+    double *lb = NULL, *ub = NULL, *mu = NULL, *covariance = NULL;
     
     datafile = fopen(filename, "r");
     if (!datafile){
@@ -54,8 +59,9 @@ int readit(char *filename, int *address_of_n, double **plb, double **pub,
     }
     
     n = *address_of_n = atoi(buffer);
-    
     printf("n = %d\n", n);
+    
+    
     
     lb = (double *)calloc(n, sizeof(double));
     *plb = lb;
@@ -63,19 +69,13 @@ int readit(char *filename, int *address_of_n, double **plb, double **pub,
     *pub = ub;
     mu = (double *)calloc(n, sizeof(double));
     *pmu = mu;
-    lambda = (double *)calloc(1, sizeof(double));
-    *plambda = lambda;
     covariance = (double *)calloc(n*n, sizeof(double));
     *pcovariance = covariance;
     
-    if (!lb || !ub || !mu || !lambda || !covariance){
-        printf("not enough memory for lb ub mu covariance\n"); readcode = 3; goto BACK;
-    }
     
-    //fscanf(datafile, "%s", buffer);
-    //lambda = atof(buffer);
     
-    for (j = 0; j < n; j++){
+    for (j = 0; j<1; j++){
+        fscanf(datafile, "%s", buffer);
         fscanf(datafile, "%s", buffer);
         fscanf(datafile, "%s", buffer);
         lb[j] = atof(buffer);
@@ -86,16 +86,33 @@ int readit(char *filename, int *address_of_n, double **plb, double **pub,
         printf("j = %d lb = %g ub = %g mu = %g\n", j, lb[j], ub[j], mu[j]);
     }
     
+    for (j = 1; j < n; j++){
+        fscanf(datafile, "%s", buffer);
+        fscanf(datafile, "%s", buffer);
+        lb[j] = atof(buffer);
+        fscanf(datafile, "%s", buffer);
+        ub[j] = atof(buffer);
+        fscanf(datafile, "%s", buffer);
+        mu[j] = atof(buffer);
+        printf("j = %d lb = %g ub = %g mu = %g\n", j, lb[j], ub[j], mu[j]);
+    }
+    
+    
     fscanf(datafile, "%s", buffer);
+    fscanf(datafile, "%s", buffer);
+    lambda = *address_of_lambda = atoi(buffer);
+    printf("lambda = %f\n", lambda);
+    
     fscanf(datafile, "%s", buffer);
     
     
-    fscanf(datafile, "%s", buffer); /* reading 'covariance'*/
+   /* reading 'covariance'*/
     
     for (i = 0; i < n; i++){
         for (j = 0; j < n; j++){
             fscanf(datafile, "%s", buffer);
             covariance[i*n + j] = atof(buffer);
+            printf("%f ", covariance[i*n+j]);
         }
     }
     
@@ -105,11 +122,8 @@ int readit(char *filename, int *address_of_n, double **plb, double **pub,
         printf("possible error in data file: 'END' missing\n");
     }
     
-    
     fclose(datafile);
-    
     BACK:
-    
     return readcode;
 }
 
